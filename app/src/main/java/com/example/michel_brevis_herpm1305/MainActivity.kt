@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-
 import androidx.compose.material3.*
 
 import androidx.navigation.NavHostController
@@ -25,6 +24,9 @@ import androidx.compose.runtime.remember
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+
+import androidx.compose.runtime.*
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,26 +49,23 @@ data class Product(
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    // Estado compartido para almacenar productos
+    val productList = remember { mutableStateListOf<Product>() }
+
     NavHost(navController = navController, startDestination = "productList") {
         composable("productList") {
-            ProductListScreen(navController)
+            ProductListScreen(navController, productList)
         }
         composable("addProduct") {
-            AddProductScreen(navController)
+            AddProductScreen(navController, productList)
         }
     }
 }
 
 // Pantalla principal con lista de productos
 @Composable
-fun ProductListScreen(navController: NavHostController) {
-    val sampleProducts = listOf(
-        Product("Manzanas", 100, 1.2, "España"),
-        Product("Peras", 50, 2.5, "Francia"),
-        Product("Uvas", 200, 1.8, "Alemania"),
-        Product("Naranjas", 80, 3.0, "Italia")
-    )
 
+fun ProductListScreen(navController: NavHostController, productList: List<Product>) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Button(
             onClick = { navController.navigate("addProduct") },
@@ -74,9 +73,10 @@ fun ProductListScreen(navController: NavHostController) {
         ) {
             Text(text = "Agregar Producto")
         }
+
         LazyColumn {
-            items(sampleProducts.size) { index ->
-                ProductCard(product = sampleProducts[index])
+            items(productList.size) { index ->
+                ProductCard(product = productList[index])
             }
         }
     }
@@ -101,8 +101,7 @@ fun ProductCard(product: Product) {
 
 // Pantalla para agregar un producto
 @Composable
-fun AddProductScreen(navController: NavHostController) {
-    // Variables para almacenar los datos ingresados
+fun AddProductScreen(navController: NavHostController, productList: MutableList<Product>) {
     var name by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("") }
     var priceEuro by remember { mutableStateOf("") }
@@ -116,7 +115,6 @@ fun AddProductScreen(navController: NavHostController) {
     ) {
         Text(text = "Agregar Producto", fontSize = 24.sp)
 
-        // Campos de texto para ingresar datos
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
@@ -145,19 +143,16 @@ fun AddProductScreen(navController: NavHostController) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Botón para guardar el producto
         Button(
             onClick = {
-                // Validamos los campos y guardamos el producto
                 if (name.isNotEmpty() && quantity.isNotEmpty() && priceEuro.isNotEmpty() && destination.isNotEmpty()) {
-                    // Simulamos guardar el producto en una lista temporal (pendiente almacenamiento persistente)
                     val product = Product(
                         name = name,
                         quantity = quantity.toIntOrNull() ?: 0,
                         priceEuro = priceEuro.toDoubleOrNull() ?: 0.0,
                         destination = destination
                     )
-                    // Volvemos a la pantalla anterior (en el futuro, persistiremos el producto)
+                    productList.add(product) // Agregar el producto a la lista compartida
                     navController.navigateUp()
                 }
             },
@@ -166,7 +161,6 @@ fun AddProductScreen(navController: NavHostController) {
             Text("Guardar Producto")
         }
 
-        // Botón para regresar
         Button(
             onClick = { navController.navigateUp() },
             modifier = Modifier.fillMaxWidth()
