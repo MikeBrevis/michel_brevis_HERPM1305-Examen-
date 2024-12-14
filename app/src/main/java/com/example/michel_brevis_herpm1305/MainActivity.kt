@@ -20,6 +20,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,22 +102,76 @@ fun ProductCard(product: Product) {
 // Pantalla para agregar un producto
 @Composable
 fun AddProductScreen(navController: NavHostController) {
+    // Variables para almacenar los datos ingresados
+    var name by remember { mutableStateOf("") }
+    var quantity by remember { mutableStateOf("") }
+    var priceEuro by remember { mutableStateOf("") }
+    var destination by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Pantalla de Agregar Producto",
-            fontSize = 24.sp,
-            modifier = Modifier.padding(bottom = 16.dp)
+        Text(text = "Agregar Producto", fontSize = 24.sp)
+
+        // Campos de texto para ingresar datos
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Nombre del Producto") },
+            modifier = Modifier.fillMaxWidth()
         )
+
+        OutlinedTextField(
+            value = quantity,
+            onValueChange = { quantity = it },
+            label = { Text("Cantidad") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = priceEuro,
+            onValueChange = { priceEuro = it },
+            label = { Text("Precio en Euros") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = destination,
+            onValueChange = { destination = it },
+            label = { Text("Lugar de Exportación") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Botón para guardar el producto
+        Button(
+            onClick = {
+                // Validamos los campos y guardamos el producto
+                if (name.isNotEmpty() && quantity.isNotEmpty() && priceEuro.isNotEmpty() && destination.isNotEmpty()) {
+                    // Simulamos guardar el producto en una lista temporal (pendiente almacenamiento persistente)
+                    val product = Product(
+                        name = name,
+                        quantity = quantity.toIntOrNull() ?: 0,
+                        priceEuro = priceEuro.toDoubleOrNull() ?: 0.0,
+                        destination = destination
+                    )
+                    // Volvemos a la pantalla anterior (en el futuro, persistiremos el producto)
+                    navController.navigateUp()
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Guardar Producto")
+        }
+
+        // Botón para regresar
         Button(
             onClick = { navController.navigateUp() },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Volver")
+            Text("Volver")
         }
     }
 }
