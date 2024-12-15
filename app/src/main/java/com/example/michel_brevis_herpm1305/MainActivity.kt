@@ -27,6 +27,10 @@ import androidx.compose.runtime.setValue
 
 import androidx.compose.runtime.*
 
+import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,8 +68,7 @@ fun AppNavigation() {
 
 // Pantalla principal con lista de productos
 @Composable
-
-fun ProductListScreen(navController: NavHostController, productList: List<Product>) {
+fun ProductListScreen(navController: NavHostController, productList: MutableList<Product>) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Button(
             onClick = { navController.navigate("addProduct") },
@@ -76,15 +79,21 @@ fun ProductListScreen(navController: NavHostController, productList: List<Produc
 
         LazyColumn {
             items(productList.size) { index ->
-                ProductCard(product = productList[index])
+                ProductCard(
+                    product = productList[index],
+                    onDelete = { productList.removeAt(index) } // Acción para eliminar el producto
+                )
             }
         }
     }
 }
 
+
 // Tarjeta que muestra información de un producto
 @Composable
-fun ProductCard(product: Product) {
+fun ProductCard(product: Product, onDelete: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -95,6 +104,25 @@ fun ProductCard(product: Product) {
             Text(text = "Cantidad: ${product.quantity}")
             Text(text = "Precio: ${product.priceEuro} €")
             Text(text = "Lugar de exportación: ${product.destination}")
+
+            // Botón para desplegar el menú contextual
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Menú")
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Eliminar") },
+                        onClick = {
+                            expanded = false
+                            onDelete() // Acción de eliminación
+                        }
+                    )
+                }
+            }
         }
     }
 }
