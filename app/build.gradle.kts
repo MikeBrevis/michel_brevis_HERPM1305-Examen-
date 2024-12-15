@@ -1,7 +1,9 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("kotlin-kapt") // Asegúrate de escribirlo correctamente
 }
+
 
 android {
     namespace = "com.example.michel_brevis_herpm1305"
@@ -80,6 +82,11 @@ dependencies {
 
     implementation ("androidx.compose.ui:ui-graphics:1.5.1")
     implementation ("androidx.compose.foundation:foundation:1.5.1")
+
+    implementation ("androidx.room:room-runtime:2.5.0")
+    kapt ("androidx.room:room-compiler:2.5.0")
+    implementation ("androidx.room:room-ktx:2.5.0")
+
 
 
 }
