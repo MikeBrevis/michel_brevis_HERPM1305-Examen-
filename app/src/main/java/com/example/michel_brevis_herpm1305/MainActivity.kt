@@ -142,6 +142,7 @@ fun ProductCard(product: Product, onDelete: () -> Unit) {
     }
 }
 
+
 // Pantalla para agregar un producto
 @Composable
 fun AddProductScreen(navController: NavHostController, productList: MutableList<Product>) {
@@ -149,69 +150,90 @@ fun AddProductScreen(navController: NavHostController, productList: MutableList<
     var quantity by remember { mutableStateOf("") }
     var priceEuro by remember { mutableStateOf("") }
     var destination by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showSnackbar by remember { mutableStateOf(false) } // Controla cuándo mostrar el Snackbar
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(text = "Agregar Producto", fontSize = 24.sp)
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Nombre del Producto") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = quantity,
-            onValueChange = { quantity = it },
-            label = { Text("Cantidad") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = priceEuro,
-            onValueChange = { priceEuro = it },
-            label = { Text("Precio en Euros") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = destination,
-            onValueChange = { destination = it },
-            label = { Text("Lugar de Exportación") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = {
-                if (name.isNotEmpty() && quantity.isNotEmpty() && priceEuro.isNotEmpty() && destination.isNotEmpty()) {
-                    val product = Product(
-                        name = name,
-                        quantity = quantity.toIntOrNull() ?: 0,
-                        priceEuro = priceEuro.toDoubleOrNull() ?: 0.0,
-                        destination = destination
-                    )
-                    productList.add(product) // Agregar el producto a la lista compartida
-                    navController.navigateUp()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Guardar Producto")
+    // Mostrar el Snackbar cuando showSnackbar sea true
+    if (showSnackbar) {
+        LaunchedEffect(Unit) {
+            snackbarHostState.showSnackbar("Producto cargado correctamente")
+            kotlinx.coroutines.delay(500) // Tiempo en milisegundos (1.5 segundos)
+            showSnackbar = false // Restablecer el estado
+            navController.navigateUp() // Navegar después del retraso
         }
+    }
 
-        Button(
-            onClick = { navController.navigateUp() },
-            modifier = Modifier.fillMaxWidth()
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = Modifier.fillMaxSize()
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Volver")
+            Text(text = "Agregar Producto", fontSize = 24.sp)
+
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nombre del Producto") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = quantity,
+                onValueChange = { quantity = it },
+                label = { Text("Cantidad") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = priceEuro,
+                onValueChange = { priceEuro = it },
+                label = { Text("Precio en Euros") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = destination,
+                onValueChange = { destination = it },
+                label = { Text("Lugar de Exportación") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Button(
+                onClick = {
+                    if (name.isNotEmpty() && quantity.isNotEmpty() && priceEuro.isNotEmpty() && destination.isNotEmpty()) {
+                        val product = Product(
+                            name = name,
+                            quantity = quantity.toIntOrNull() ?: 0,
+                            priceEuro = priceEuro.toDoubleOrNull() ?: 0.0,
+                            destination = destination
+                        )
+                        productList.add(product) // Agregar el producto a la lista compartida
+
+                        // Activar el Snackbar
+                        showSnackbar = true
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Guardar Producto")
+            }
+
+            Button(
+                onClick = { navController.navigateUp() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Volver")
+            }
         }
     }
 }
+
 
 @Composable
 fun ProductChartScreen(productList: List<Product>) {
