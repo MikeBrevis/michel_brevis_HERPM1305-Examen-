@@ -3,6 +3,7 @@ package com.example.michel_brevis_herpm1305
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
@@ -30,6 +31,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+
+import androidx.compose.ui.draw.drawBehind
+
 
 
 class MainActivity : ComponentActivity() {
@@ -63,6 +67,9 @@ fun AppNavigation() {
         composable("addProduct") {
             AddProductScreen(navController, productList)
         }
+        composable("chart") {
+            ProductChartScreen(productList)
+        }
     }
 }
 
@@ -77,16 +84,24 @@ fun ProductListScreen(navController: NavHostController, productList: MutableList
             Text(text = "Agregar Producto")
         }
 
+        Button(
+            onClick = { navController.navigate("chart") },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+        ) {
+            Text(text = "Ver Gráfico")
+        }
+
         LazyColumn {
             items(productList.size) { index ->
                 ProductCard(
                     product = productList[index],
-                    onDelete = { productList.removeAt(index) } // Acción para eliminar el producto
+                    onDelete = { productList.removeAt(index) }
                 )
             }
         }
     }
 }
+
 
 
 // Tarjeta que muestra información de un producto
@@ -197,3 +212,53 @@ fun AddProductScreen(navController: NavHostController, productList: MutableList<
         }
     }
 }
+
+@Composable
+fun ProductChartScreen(productList: List<Product>) {
+    val topProducts = remember(productList) { productList.sortedByDescending { it.priceEuro }.take(4) }
+    val maxPrice = topProducts.maxOfOrNull { it.priceEuro } ?: 1.0
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Gráfico de los 4 Productos Más Costosos",
+            fontSize = 24.sp,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            topProducts.forEach { product ->
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Bottom,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .height((product.priceEuro / maxPrice * 200).dp)
+                            .width(40.dp)
+                            .background(color = MaterialTheme.colorScheme.primary)
+                    )
+                    Text(
+                        text = product.name,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    Text(
+                        text = "${product.priceEuro} €",
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+
