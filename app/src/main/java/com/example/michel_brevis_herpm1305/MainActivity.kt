@@ -32,7 +32,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 
-import androidx.compose.ui.draw.drawBehind
+// Funcion para obtener el valor de Euro
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+
+suspend fun fetchEuroValue(): Double? {
+    return withContext(Dispatchers.IO) {
+        try {
+            val client = OkHttpClient()
+            val request = Request.Builder()
+                .url("https://mindicador.cl/api/euro")
+                .build()
+            val response = client.newCall(request).execute()
+            val bodyString = response.body?.string()
+            response.close()
+
+            if (bodyString != null) {
+                // Parseamos el JSON
+                val json = JSONObject(bodyString)
+                val serie = json.getJSONArray("serie")
+                if (serie.length() > 0) {
+                    val firstElement = serie.getJSONObject(0)
+                    // El valor del euro está en "valor"
+                    return@withContext firstElement.getDouble("valor")
+                }
+            }
+            null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+}
 
 
 
@@ -76,6 +111,14 @@ fun AppNavigation() {
 // Pantalla principal con lista de productos
 @Composable
 fun ProductListScreen(navController: NavHostController, productList: MutableList<Product>) {
+    var euroValue by remember { mutableStateOf<Double?>(null) }
+
+    // Al iniciar la composable, obtenemos el valor del euro
+    LaunchedEffect(Unit) {
+        val value = fetchEuroValue()
+        euroValue = value
+    }
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Button(
             onClick = { navController.navigate("addProduct") },
@@ -91,12 +134,18 @@ fun ProductListScreen(navController: NavHostController, productList: MutableList
             Text(text = "Ver Gráfico")
         }
 
-        LazyColumn {
-            items(productList.size) { index ->
-                ProductCard(
-                    product = productList[index],
-                    onDelete = { productList.removeAt(index) }
-                )
+        // Mostramos un indicador si aún no tenemos el valor del euro
+        if (euroValue == null) {
+            Text("Cargando valor del euro...")
+        } else {
+            LazyColumn {
+                items(productList.size) { index ->
+                    ProductCard(
+                        product = productList[index],
+                        onDelete = { productList.removeAt(index) },
+                        euroValue = euroValue
+                    )
+                }
             }
         }
     }
@@ -106,8 +155,10 @@ fun ProductListScreen(navController: NavHostController, productList: MutableList
 
 // Tarjeta que muestra información de un producto
 @Composable
-fun ProductCard(product: Product, onDelete: () -> Unit) {
+fun ProductCard(product: Product, onDelete: () -> Unit, euroValue: Double?) {
     var expanded by remember { mutableStateOf(false) }
+
+    val priceInCLP = if (euroValue != null) product.priceEuro * euroValue else null
 
     Card(
         modifier = Modifier
@@ -118,9 +169,13 @@ fun ProductCard(product: Product, onDelete: () -> Unit) {
             Text(text = "Producto: ${product.name}", fontSize = 20.sp)
             Text(text = "Cantidad: ${product.quantity}")
             Text(text = "Precio: ${product.priceEuro} €")
+            if (priceInCLP != null) {
+                Text(text = "Precio en CLP: $priceInCLP")
+            } else {
+                Text(text = "Cargando precio en CLP...")
+            }
             Text(text = "Lugar de exportación: ${product.destination}")
 
-            // Botón para desplegar el menú contextual
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) {
                 IconButton(onClick = { expanded = true }) {
                     Icon(Icons.Default.MoreVert, contentDescription = "Menú")
@@ -133,7 +188,7 @@ fun ProductCard(product: Product, onDelete: () -> Unit) {
                         text = { Text("Eliminar") },
                         onClick = {
                             expanded = false
-                            onDelete() // Acción de eliminación
+                            onDelete()
                         }
                     )
                 }
@@ -141,6 +196,7 @@ fun ProductCard(product: Product, onDelete: () -> Unit) {
         }
     }
 }
+
 
 
 // Pantalla para agregar un producto
